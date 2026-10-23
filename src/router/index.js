@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { auth } from '../services/firebase'
 
-// Import every page we will build
+// Existing YellowBird pages
 import HomeView          from '../views/HomeView.vue'
 import ProductView       from '../views/ProductView.vue'
 import CartView          from '../views/CartView.vue'
@@ -17,60 +18,161 @@ import AdminProductsView from '../views/AdminProductsView.vue'
 import AdminProductForm  from '../views/AdminProductForm.vue'
 import NotFoundView      from '../views/NotFoundView.vue'
 
-// Each route says: when the URL is this, show this page
-// meta: { requiresAuth: true } means you must be signed in to see that page
 const routes = [
-  { path: '/',                        component: HomeView },
-  { path: '/product/:id',             component: ProductView },
-  { path: '/cart',                    component: CartView },
-  { path: '/checkout',                component: CheckoutView,      meta: { requiresAuth: true } },
-  { path: '/order-confirm',           component: OrderConfirmView,  meta: { requiresAuth: true } },
-  { path: '/orders',                  component: OrderHistoryView,  meta: { requiresAuth: true } },
-  { path: '/signin',                  component: SignInView },
-  { path: '/register',                component: RegisterView },
-  { path: '/account',                 component: AccountView,       meta: { requiresAuth: true } },
-  { path: '/admin',                   component: AdminDashView,     meta: { requiresAuth: true } },
-  { path: '/admin/orders',            component: AdminOrdersView,   meta: { requiresAuth: true } },
-  { path: '/admin/products',          component: AdminProductsView, meta: { requiresAuth: true } },
-  { path: '/admin/products/new',      component: AdminProductForm,  meta: { requiresAuth: true } },
-  { path: '/admin/products/:id/edit', component: AdminProductForm,  meta: { requiresAuth: true } },
-  { path: '/:pathMatch(.*)*',         component: NotFoundView },
+  // Public pages
+  { path: '/', component: HomeView },
+  { path: '/product/:id', component: ProductView },
+  { path: '/cart', component: CartView },
+
+  // Customer pages
+  {
+    path: '/checkout',
+    component: CheckoutView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/order-confirm',
+    component: OrderConfirmView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/orders',
+    component: OrderHistoryView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/signin',
+    component: SignInView
+  },
+  {
+    path: '/register',
+    component: RegisterView
+  },
+  {
+    path: '/account',
+    component: AccountView,
+    meta: { requiresAuth: true }
+  },
+
+  // Admin dashboard
+  {
+    path: '/admin',
+    redirect: '/admin/dashboard'
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'AdminDashboard',
+    component: AdminDashView,
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+
+  // Admin orders
+  {
+    path: '/admin/orders',
+    component: AdminOrdersView,
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+
+  // Admin products
+  {
+    path: '/admin/products',
+    component: AdminProductsView,
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+  {
+    path: '/admin/products/new',
+    component: AdminProductForm,
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+  {
+    path: '/admin/products/:id/edit',
+    component: AdminProductForm,
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+
+  // 404
+  {
+    path: '/:pathMatch(.*)*',
+    component: NotFoundView
+  }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // Always scroll to the top of the page when navigating
   scrollBehavior() {
     return { top: 0 }
-  },
+  }
 })
 
-// This runs before every page navigation
-// It checks if the page needs the user to be signed in
+// Wait for Firebase to restore the user's session
+async function getCurrentUser() {
+  if (!auth) return null
+
+  await auth.authStateReady()
+
+  return auth.currentUser
+}
+
+// Protect authenticated and administrator pages
 router.beforeEach(async (to) => {
-  if (!to.meta.requiresAuth) return true
+  const requiresAdmin = to.matched.some(
+    record => record.meta.requiresAdmin
+  )
 
-  const authStore = useAuthStore()
+  const requiresAuth = requiresAdmin || to.matched.some(
+    record => record.meta.requiresAuth
+  )
 
-  // Wait for Firebase to finish loading before we check
-  if (authStore.loading) {
-    await new Promise(resolve => {
-      const check = setInterval(() => {
-        if (!authStore.loading) {
-          clearInterval(check)
-          resolve()
-        }
-      }, 50)
-    })
+  if (!requiresAuth) return true
+
+  try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return {
+        path: '/signin',
+        query: { redirect: to.fullPath }
+      }
+    }
+
+    // Check Firebase administrator claims
+    if (requiresAdmin) {
+      const tokenResult = await user.getIdTokenResult(true)
+
+      const isAdmin =
+        tokenResult.claims.admin === true ||
+        tokenResult.claims.role === 'admin'
+
+      if (!isAdmin) {
+        console.warn('Access denied: Admin privileges required')
+
+        return { path: '/' }
+      }
+    }
+
+    return true
+
+  } catch (error) {
+    console.error('YellowBird route authorization error:', error)
+
+    return { path: '/signin' }
   }
-
-  // If not signed in, send them to the sign in page
-  if (!authStore.isLoggedIn) {
-    return { path: '/signin', query: { redirect: to.fullPath } }
-  }
-
-  return true
 })
 
 export default router
