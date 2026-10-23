@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #f5c000;
+  --color-brand-hover: #ffd740;
+  --color-brand-ink: #1a1100;
+  --color-canvas: #0e0e12;
+  --color-surface: #16161d;
+  --color-surface-elevated: #1e1e28;
+  --color-muted: #888898;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --font-display: "Syne", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: #f0f0f0;
+    min-width: 320px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(245, 192, 0, 0.35);
+    color: #fff;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  button {
+    cursor: pointer;
+    font: inherit;
+    border: none;
+    background: none;
+  }
+
+  input, textarea, select {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(245, 192, 0, 0.55);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .yb-display {
+    font-family: var(--font-display);
+  }
+
+  .yb-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+  }
+
+  .yb-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: #fff;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    transition: border-color 0.15s ease;
+  }
+
+  .yb-input::placeholder {
+    color: #6b7280;
+  }
+
+  .yb-input:focus {
+    border-color: rgba(245, 192, 0, 0.45);
+    outline: none;
+  }
+
+  .yb-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    background: var(--color-brand);
+    color: var(--color-brand-ink);
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+
+  .yb-btn-primary:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+
+  .yb-btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .yb-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .yb-auth-shell {
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(245, 192, 0, 0.09), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 90% 100%, rgba(124, 58, 237, 0.08), transparent 50%),
+      var(--color-canvas);
+  }
+
+  .yb-alert-error {
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    background: #2a1a1a;
+    border: 1px solid #6a2d2d;
+    color: #f87171;
+  }
+
+  .yb-setup-banner {
+    background: linear-gradient(90deg, #2a2200 0%, #1a1808 100%);
+    border-bottom: 1px solid rgba(245, 192, 0, 0.25);
+    color: #ffe9a8;
+  }
+}

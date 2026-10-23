@@ -1,0 +1,14 @@
+# These folders are too big and can be re-downloaded
+node_modules/
+
+# Secret files — never upload these
+.env
+server/.env
+server/serviceAccountKey.json
+
+# Build output
+dist/
+
+# System files
+.DS_Store
+Thumbs.db
