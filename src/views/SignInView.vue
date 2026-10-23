@@ -168,4 +168,4 @@ async function handleSignIn() {
       </router-link>
     </p>
   </AuthLayout>
-</template>```
+</template>
