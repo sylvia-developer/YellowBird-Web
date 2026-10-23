@@ -1,4 +1,4 @@
-```<script setup>
+<script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
